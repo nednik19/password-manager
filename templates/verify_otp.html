@@ -8,10 +8,15 @@
   <div class="inputBox">
   <button class="button_create" type="submit" name="create" class="create-btn">submit QR</button>
 </div>
-  {% if error %}
+{% with messages = get_flashed_messages(with_categories=True) %}
+{% if messages %}
   <ul>
-    <li class="red_errors">{{error}}</li>
+    {% for category, message in messages %}
+      <li class="{{ category }}">{{ message }}</li>
+    {% endfor %}
   </ul>
-  {% endif %}
+{% endif %}
+{% endwith %}
+
 </form>
 {% endblock %}
