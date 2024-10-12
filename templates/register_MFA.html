@@ -1,22 +1,30 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} 
+{% block content %}
 <h2>MFA</h2>
-<form class="form" method="post">
-    <input type="hidden" name="username" value="{{username}}">
+<form class="form" method="post" action="{{ url_for('auth.register_MFA') }}">
+    <input type="hidden" name="username" value="{{ session['username'] }}">
     <div class="inputBox">
-      <img class="qrcode" src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code">
-        <p>Open this QR code via Authy or Google Authentificator and enter OTP</p>
+        <img class="qrcode" src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code">
+        <p>Open this QR code via Authy or Google Authenticator and enter OTP</p>
     </div>
-  <div class="inputBox">
-    <input type="text" id="otp_code" name="otp""/><i>Enter OTP code</i>
+    <div class="inputBox">
+        <input type="text" id="otp_code" name="otp"/><i>Enter OTP code</i>
     </div>
-    <div class="links"> <a href="#"></a> <a class="a_logout" href="{{ url_for('auth.login') }}">logout</a></div> 
-  <div class="inputBox">
-  <button class="button_create" type="submit" name="create" class="create-btn">submit QR</button>
-</div>
-  {% if error %}
-  <ul>
-    <li class="red_errors">{{error}}</li>
-  </ul>
-  {% endif %}
+    <div class="links"> 
+        <a href="#"></a> 
+        <a class="a_logout" href="{{ url_for('auth.login') }}">logout</a>
+    </div> 
+    <div class="inputBox">
+        <button class="button_create" type="submit" name="create" class="create-btn">Submit OTP</button>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li class="{{ category }}" id="red_errors">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
 </form>
 {% endblock %}

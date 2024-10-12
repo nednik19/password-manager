@@ -16,11 +16,15 @@
                 <div class="inputBox">
                     <input type="submit" value="Sign Up">
                 </div>
-                {% if error %}
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
                     <ul>
-                        <li class="red_errors">{{error}}</li>
+                        {% for message in messages %}
+                            <li class="red_errors">{{ message }}</li>
+                        {% endfor %}
                     </ul>
                 {% endif %}
+            {% endwith %}
             </form>
         </div>
     </div>

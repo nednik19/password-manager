@@ -274,6 +274,11 @@ input[type="submit"]:active
   list-style: none;
   color: rgb(236, 4, 4);
 }
+#red_errors{
+  list-style: none;
+  color: rgb(236, 4, 4);
+}
+
 
 .username_diplayer{
     transform: translateY(-7.5px);
