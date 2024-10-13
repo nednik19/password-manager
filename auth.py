@@ -304,3 +304,33 @@ def get_passwords():
         conn.close()
 
     return jsonify(passwords_list)
+# Delete password route
+@auth.route('/api/delete_password', methods=['POST'])
+def delete_password():
+    username = session.get('username')
+    if not username:
+        return jsonify({'error': 'Session expired. Please log in again.'}), 401
+
+    site = request.json.get('site')
+    if not site:
+        return jsonify({'error': 'Website is required to delete a password.'}), 400
+
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
+        if user is None:
+            return jsonify({'error': 'User not found.'}), 404
+
+        cursor.execute("DELETE FROM passwords WHERE user_id = ? AND website = ?", (username, site))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Password not found.'}), 404
+
+        return jsonify({'message': 'Password deleted successfully.'}), 200
+    except sqlite3.OperationalError:
+        return jsonify({'error': 'Database error occurred. Please try again later.'}), 500
+    finally:
+        conn.close()

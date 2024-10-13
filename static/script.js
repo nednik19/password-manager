@@ -45,7 +45,7 @@ function renderPasswords(passwords) {
         actionsDiv.innerHTML = `
         <i class="fas fa-copy" onclick="copyPassword(${index}, '${item.password}')" title="Copy"></i>
         <i class="fas fa-edit" onclick="promptEditPassword(${index})" title="Edit"></i>
-        <i class="fas fa-trash-alt" onclick="confirmDelete(${index})" title="Delete"></i>
+        <i class="fas fa-trash-alt" onclick="confirmDelete('${item.website}')" title="Delete"></i>
         `;
         
         // Append elements to list item
@@ -146,10 +146,35 @@ function showPopup(message, hasCancel = false, isEditing = false, index = null) 
 }
 
 // Function to confirm deletion with custom popup
-async function confirmDelete(index) {
+async function confirmDelete(site) {
     const confirmed = await showPopup('Are you sure you want to delete this password?', true);
     if (confirmed) {
-        // Delete password logic to be implemented
+        try {
+            console.log('Deleting password for site:', site);
+            const response = await fetch('/api/delete_password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'site': site
+                }),
+                credentials: 'same-origin'
+            });
+            console.log('Delete password API response:', response);
+
+            if (response.ok) {
+                console.log('Password deleted successfully.');
+                fetchPasswords();
+            } else {
+                const errorData = await response.json();
+                console.log('Error deleting password:', errorData);
+                showPopup(errorData.error);
+            }
+        } catch (error) {
+            console.log('Error occurred while deleting password:', error);
+            showPopup('Error deleting password. Please try again later.');
+        }
     }
 }
 
