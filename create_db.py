@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     password BLOB NOT NULL,
     email TEXT NOT NULL,
-    secret_qrcode_key TEXT
+    secret_qrcode_key TEXT,
+    unique_key TEXT
 )
 ''')
 
