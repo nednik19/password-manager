@@ -36,7 +36,7 @@ function renderPasswords(passwords) {
         passwordSpan.innerHTML = `
         <strong>${item.website}</strong>: 
         <span class="password" id="password-${index}">${'*'.repeat(item.password.length)}</span>
-        <i class="fas fa-eye show-password" onclick="togglePassword(${index})" title="Show/Hide Password"></i> 
+        <i class="fas fa-eye show-password" onclick="togglePassword(${index}, '${item.password}')" title="Show/Hide Password"></i> 
         `;
         
         // Create a div for action buttons
@@ -159,12 +159,12 @@ async function promptEditPassword(index) {
 }
 
 // Function to toggle the visibility of the password
-function togglePassword(index) {
+function togglePassword(index, password) {
     const passwordSpan = document.getElementById(`password-${index}`);
-    if (passwordSpan.textContent === '*'.repeat(passwordSpan.textContent.length)) {
-        passwordSpan.textContent = passwordSpan.dataset.password;
+    if (passwordSpan.textContent === '*'.repeat(password.length)) {
+        passwordSpan.textContent = password;
     } else {
-        passwordSpan.textContent = '*'.repeat(passwordSpan.dataset.password.length);
+        passwordSpan.textContent = '*'.repeat(password.length);
     }
 }
 
