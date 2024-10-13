@@ -334,3 +334,41 @@ def delete_password():
         return jsonify({'error': 'Database error occurred. Please try again later.'}), 500
     finally:
         conn.close()
+
+@auth.route('/api/update_password', methods=['POST'])
+def update_password():
+    username = session.get('username')
+    if not username:
+        return jsonify({'error': 'Session expired. Please log in again.'}), 401
+
+    data = request.json
+    site = data.get('site')
+    new_password = data.get('new_password')
+
+    if not site or not new_password:
+        return jsonify({'error': 'Website and new password are required.'}), 400
+
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
+        if user is None:
+            return jsonify({'error': 'User not found.'}), 404
+
+        user_encryption_key = cursor.execute("SELECT unique_key FROM users WHERE username = ?", (username,)).fetchone()['unique_key']
+        fernet = Fernet(user_encryption_key.encode())
+
+        encrypted_password = fernet.encrypt(new_password.encode()).decode()
+
+        cursor.execute("UPDATE passwords SET password_encrypted = ? WHERE user_id = ? AND website = ?", (encrypted_password, username, site))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Password not found.'}), 404
+
+        return jsonify({'message': 'Password updated successfully.'}), 200
+    except sqlite3.OperationalError:
+        return jsonify({'error': 'Database error occurred. Please try again later.'}), 500
+    finally:
+        conn.close()

@@ -44,7 +44,7 @@ function renderPasswords(passwords) {
         actionsDiv.classList.add('actions');
         actionsDiv.innerHTML = `
         <i class="fas fa-copy" onclick="copyPassword(${index}, '${item.password}')" title="Copy"></i>
-        <i class="fas fa-edit" onclick="promptEditPassword(${index})" title="Edit"></i>
+        <i class="fas fa-edit" onclick="promptEditPassword('${item.website}')" title="Edit"></i>
         <i class="fas fa-trash-alt" onclick="confirmDelete('${item.website}')" title="Delete"></i>
         `;
         
@@ -127,7 +127,7 @@ function showPopup(message, hasCancel = false, isEditing = false, index = null) 
             if (isEditing && index !== null) {
                 const newPassword = popupInput.value;
                 if (newPassword) {
-                    // Update password logic to be implemented
+                    updatePassword(index, newPassword);
                 } else {
                     showPopup('Password cannot be empty.');
                     return;
@@ -179,8 +179,42 @@ async function confirmDelete(site) {
 }
 
 // Function to prompt for editing a password
-async function promptEditPassword(index) {
-    await showPopup('Enter new password:', false, true, index);
+async function promptEditPassword(site) {
+    const confirmed = await showPopup('Enter new password:', false, true);
+    if (confirmed) {
+        const newPassword = document.getElementById('popup-input').value;
+        if (newPassword) {
+            try {
+                console.log('Updating password for site:', site);
+                const response = await fetch('/api/update_password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'site': site,
+                        'new_password': newPassword
+                    }),
+                    credentials: 'same-origin'
+                });
+                console.log('Update password API response:', response);
+
+                if (response.ok) {
+                    console.log('Password updated successfully.');
+                    fetchPasswords();
+                } else {
+                    const errorData = await response.json();
+                    console.log('Error updating password:', errorData);
+                    showPopup(errorData.error);
+                }
+            } catch (error) {
+                console.log('Error occurred while updating password:', error);
+                showPopup('Error updating password. Please try again later.');
+            }
+        } else {
+            showPopup('Password cannot be empty.');
+        }
+    }
 }
 
 // Function to toggle the visibility of the password
