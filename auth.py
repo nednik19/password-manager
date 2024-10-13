@@ -124,15 +124,10 @@ def login():
             return render_template('login.html', messages=get_flashed_messages(with_categories=True))
 
         # Retrieve the user from the database using the provided username
-        try:
-            conn = get_db()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-            user = cursor.fetchone()
-        except sqlite3.OperationalError as e:
-            flash('Database error occurred. Please try again later.', 'error')
-            print(f"Database error: {e}")
-            return render_template('login.html', messages=get_flashed_messages(with_categories=True))
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+        user = cursor.fetchone()
 
         if user:
             # Retrieve the hashed password from the database
@@ -143,86 +138,24 @@ def login():
                 # Set session data for the logged-in user
                 session['username'] = username
                 session.modified = True  # Ensure session is saved
-                # Debugging log for successful login
-                print(f"Login successful for user: '{username}'")
                 # Redirect to OTP verification for MFA
                 return redirect(url_for('auth.verify_otp'))
             else:
                 # If the password is incorrect, flash an error message
                 flash('Invalid password. Please try again.', 'error')
-                print(f"Invalid password for user: '{username}'")
         else:
             # If the username is not found, flash an error message
             flash('Username not found.', 'error')
-            print(f"Username not found: '{username}'")
-
         conn.close()
 
     # Render the login form
     return render_template('login.html', messages=get_flashed_messages(with_categories=True))
 
-# MFA Registration route
-@auth.route('/register_MFA', methods=['GET', 'POST'])
-def register_MFA():
-    # Get the username from the session
-    username = session.get('username')
-    qr_code_base64 = session.get('qr_code_base64')
-
-    if not username:
-        flash('Session expired. Please log in again.', 'error')
-        return redirect(url_for('auth.login'))
-
-    if request.method == 'POST':
-        # Get the OTP entered by the user
-        otp = request.form.get('otp', '').strip()
-
-        # Debugging log for OTP input
-        print(f"Received OTP: '{otp}' for user: '{username}'")
-
-        # Validate OTP field
-        if not otp:
-            flash('OTP is required.', 'error')
-            return render_template('register_MFA.html', qr_code_base64=qr_code_base64, messages=get_flashed_messages(with_categories=True))
-
-        # Retrieve the secret key for the user from the database
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT secret_qrcode_key FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
-
-        if user:
-            secret_key = user['secret_qrcode_key']
-            # Debugging log for secret key retrieval
-            print(f"Retrieved secret key for user '{username}': '{secret_key}'")
-            # Create a TOTP object using the secret key
-            totp = pyotp.TOTP(secret_key)
-            # Verify the OTP entered by the user
-            if totp.verify(otp):
-                # OTP verification successful, redirect to the home page
-                print(f"OTP verification successful for user '{username}'")
-                conn.close()
-                return redirect(url_for('index'))
-            else:
-                # If OTP verification fails, flash an error message
-                flash('Invalid OTP. Please try again.', 'error')
-                print(f"OTP verification failed for user '{username}' with OTP '{otp}'")
-                conn.close()
-                return render_template('register_MFA.html', qr_code_base64=qr_code_base64, messages=get_flashed_messages(with_categories=True))
-        else:
-            flash('User not found.', 'error')
-            print(f"User not found during MFA setup for username '{username}'")
-            conn.close()
-            return redirect(url_for('auth.register_MFA'))
-
-    # Render the MFA registration form
-    return render_template('register_MFA.html', qr_code_base64=qr_code_base64, messages=get_flashed_messages(with_categories=True))
-
-# OTP Verification route
+# MFA Verification route
 @auth.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
     # Get the username from the session
     username = session.get('username')
-
     if not username:
         flash('Session expired. Please log in again.', 'error')
         return redirect(url_for('auth.login'))
@@ -247,16 +180,14 @@ def verify_otp():
 
         if user:
             secret_key = user['secret_qrcode_key']
-            # Debugging log for secret key retrieval
-            print(f"Retrieved secret key for user '{username}': '{secret_key}'")
             # Create a TOTP object using the secret key
             totp = pyotp.TOTP(secret_key)
             # Verify the OTP entered by the user
             if totp.verify(otp):
-                # OTP verification successful, redirect to the home page
+                # OTP verification successful, redirect to the dashboard
                 print(f"OTP verification successful for user '{username}'")
                 conn.close()
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('auth.dashboard'))
             else:
                 # If OTP verification fails, flash an error message
                 flash('Invalid OTP. Please try again.', 'error')
@@ -271,3 +202,47 @@ def verify_otp():
 
     # Render the OTP verification form
     return render_template('verify_otp.html', messages=get_flashed_messages(with_categories=True))
+
+# Dashboard route
+@auth.route('/dashboard', methods=['GET'])
+def dashboard():
+    username = session.get('username')
+    if not username:
+        flash('Session expired. Please log in again.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Retrieve saved passwords for the logged-in user
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM passwords WHERE user_id = (SELECT id FROM users WHERE username = ?)", (username,))
+    passwords = cursor.fetchall()
+    conn.close()
+
+    return render_template('dashboard.html', passwords=passwords, messages=get_flashed_messages(with_categories=True))
+
+# Add password route
+@auth.route('/add_password', methods=['POST'])
+def add_password():
+    username = session.get('username')
+    if not username:
+        flash('Session expired. Please log in again.', 'error')
+        return redirect(url_for('auth.login'))
+
+    site = request.form.get('site', '').strip()
+    password_username = request.form.get('password_username', '').strip()
+    password = request.form.get('password', '').strip()
+
+    if not site or not password_username or not password:
+        flash('All fields are required to add a password.', 'error')
+        return redirect(url_for('auth.dashboard'))
+
+    # Save the password to the database
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO passwords (user_id, site, username, password) VALUES ((SELECT id FROM users WHERE username = ?), ?, ?, ?)",
+                   (username, site, password_username, password))
+    conn.commit()
+    conn.close()
+
+    flash('Password added successfully.', 'success')
+    return redirect(url_for('auth.dashboard'))

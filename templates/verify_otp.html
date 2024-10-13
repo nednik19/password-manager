@@ -1,22 +1,26 @@
 {% extends 'base.html' %} {% block content %}
-<h2>MFA</h2>
-<form class="form" method="post">
-  <div class="inputBox">
-    <input type="text" id="otp_code" name="otp""/><i>Enter OTP code</i>
+<div class="signin">
+  <div class="content">
+    <h2>MFA</h2>
+    <form class="form" method="post">
+      <div class="inputBox">
+        <input type="text" id="otp_code" name="otp""/><i>Enter OTP code</i>
+        </div>
+        <div class="links"> <a href="#"></a> <a class="a_logout" href="{{ url_for('auth.login') }}">logout</a></div> 
+      <div class="inputBox">
+      <button class="button_create" type="submit" name="create" class="create-btn">submit QR</button>
     </div>
-    <div class="links"> <a href="#"></a> <a class="a_logout" href="{{ url_for('auth.login') }}">logout</a></div> 
-  <div class="inputBox">
-  <button class="button_create" type="submit" name="create" class="create-btn">submit QR</button>
-</div>
-{% with messages = get_flashed_messages(with_categories=True) %}
-{% if messages %}
-  <ul>
-    {% for category, message in messages %}
-      <li class="{{ category }}">{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
-{% endwith %}
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <ul>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% endwith %}
 
-</form>
-{% endblock %}
+    </form>
+  </div>
+</div>
+    {% endblock %}

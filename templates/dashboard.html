@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='styles.css') }}">
+    <!-- Include Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Password Manager</h1>
+        <div class="form-container">
+            <input type="text" id="website" placeholder="Website Name">
+            <input type="password" id="password" placeholder="Password">
+            <div class="links"> 
+                <a href="#"></a> <a href="{{ url_for('auth.login') }}" class="a_class">logout</a> 
+            </div>
+            <button id="add-btn">Add Password</button>
+        </div>
+        <div class="password-list">
+            <ul id="password-list"></ul>
+        </div>
+    </div>
+
+    <!-- Custom Popup HTML -->
+    <div id="custom-popup" class="popup hidden">
+        <div class="popup-content">
+            <div id="popup-message"></div>
+            <div id="popup-input-container" class="hidden">
+                <input type="text" id="popup-input" placeholder="New Password">
+            </div>
+            <div class="popup-buttons">
+                <button id="popup-ok">OK</button>
+                <button id="popup-cancel" class="hidden">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
