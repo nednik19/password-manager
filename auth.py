@@ -13,6 +13,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from dotenv import load_dotenv
 import hashlib
+import bleach
 
 # Load environment variables
 load_dotenv()
@@ -79,10 +80,10 @@ def decrypt_with_passkey(encrypted_key, passkey, salt):
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '').strip()
-        passkey = request.form.get('passkey', '').strip()
+        username = bleach.clean(request.form.get('username', '').strip())
+        email = bleach.clean(request.form.get('email', '').strip())
+        password = bleach.clean(request.form.get('password', '').strip())
+        passkey = bleach.clean(request.form.get('passkey', '').strip())
 
         if not username or not email or not password or not passkey:
             flash('All fields are required.', 'error')
@@ -154,9 +155,9 @@ def register_MFA():
 def login():
     print(request.form)
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
-        passkey = request.form.get('passkey', '').strip()
+        username = bleach.clean(request.form.get('username', '').strip())
+        password = bleach.clean(request.form.get('password', '').strip())
+        passkey = bleach.clean(request.form.get('passkey', '').strip())
 
         if not username or not password or not passkey:
             flash('All fields are required.', 'error')
@@ -194,7 +195,7 @@ def verify_otp():
         return redirect(url_for('auth.login'))
 
     if request.method == 'POST':
-        otp = request.form.get('otp', '').strip()
+        otp = bleach.clean(request.form.get('otp', '').strip())
 
         print(passkey)
 
@@ -271,8 +272,8 @@ def add_password():
         flash('Session expired. Please log in again.', 'error')
         return redirect(url_for('auth.login'))
 
-    site = request.form.get('site', '').strip()
-    password = request.form.get('password', '').strip()
+    site = bleach.clean(request.form.get('site', '').strip())
+    password = bleach.clean(request.form.get('password', '').strip())
 
     if not site or not password:
         flash('All fields are required to add a password.', 'error')

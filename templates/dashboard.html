@@ -12,6 +12,7 @@
     <div class="container">
         <h1>Password Manager</h1>
         <div class="form-container">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" id="website" placeholder="Website Name">
             <input type="password" id="password" placeholder="Password">
             <div class="links"> 

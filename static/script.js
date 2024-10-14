@@ -1,3 +1,6 @@
+// Get the CSRF token from the hidden input field in the form
+const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
 // Function to fetch passwords from the API
 async function fetchPasswords() {
     console.log('Fetching passwords from the API...');
@@ -67,6 +70,7 @@ document.getElementById('add-btn').addEventListener('click', async () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken  // Add CSRF token here
                 },
                 body: new URLSearchParams({
                     'site': website,
@@ -155,6 +159,7 @@ async function confirmDelete(site) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,  // Add CSRF token here
                 },
                 body: JSON.stringify({
                     'site': site
@@ -190,6 +195,7 @@ async function promptEditPassword(site) {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,  // Add CSRF token here
                     },
                     body: JSON.stringify({
                         'site': site,
