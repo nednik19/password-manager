@@ -15,12 +15,12 @@ cursor = conn.cursor()
 # Create the 'users' table
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password BLOB NOT NULL,
-    email TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
     secret_qrcode_key TEXT,
-    unique_key TEXT
+    salt TEXT
 )
 ''')
 
@@ -35,12 +35,9 @@ cursor = conn.cursor()
 # Create the 'users' table
 cursor.execute('''
 CREATE TABLE passwords (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     website TEXT NOT NULL,
-    username TEXT NOT NULL,
     password_encrypted BLOB NOT NULL,
-    description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id)
