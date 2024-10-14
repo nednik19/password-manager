@@ -3,6 +3,7 @@ from auth import auth
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+from flask_wtf.csrf import CSRFProtect
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,6 +21,9 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Protect against CSRF
 
 # Set session timeout (e.g., 30 minutes)
 app.permanent_session_lifetime = timedelta(minutes=30)
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
 
 # Register the authentication blueprint
 app.register_blueprint(auth)

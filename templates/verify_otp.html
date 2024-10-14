@@ -3,6 +3,7 @@
   <div class="content">
     <h2>MFA</h2>
     <form class="form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="inputBox">
         <input type="text" id="otp_code" name="otp""/><i>Enter OTP code</i>
         </div>

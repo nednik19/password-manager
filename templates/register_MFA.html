@@ -4,6 +4,7 @@
   <div class="content">
     <h2>MFA</h2>
     <form class="form" method="post" action="{{ url_for('auth.register_MFA') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="username" value="{{ session['username'] }}">
         <div class="inputBox">
             <img class="qrcode" src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR Code">

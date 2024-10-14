@@ -152,6 +152,7 @@ def register_MFA():
 # Login route
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    print(request.form)
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
