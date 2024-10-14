@@ -14,6 +14,8 @@ from cryptography.hazmat.backends import default_backend
 from dotenv import load_dotenv
 import hashlib
 import bleach
+import re
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -84,6 +86,21 @@ def register():
         email = bleach.clean(request.form.get('email', '').strip())
         password = bleach.clean(request.form.get('password', '').strip())
         passkey = bleach.clean(request.form.get('passkey', '').strip())
+
+        # Validate username format
+        if not re.match("^[a-zA-Z0-9_.-]{3,20}$", username):
+            flash('Username must be between 3 and 20 characters and contain only letters, numbers, or ._-', 'error')
+            return render_template('register.html', messages=get_flashed_messages(with_categories=True))
+
+        # Validate email format
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash('Invalid email format.', 'error')
+            return render_template('register.html', messages=get_flashed_messages(with_categories=True))
+
+        # Validate password strength
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long.', 'error')
+            return render_template('register.html', messages=get_flashed_messages(with_categories=True))
 
         if not username or not email or not password or not passkey:
             flash('All fields are required.', 'error')
@@ -260,7 +277,7 @@ def dashboard():
     finally:
         conn.close()
 
-    return render_template('dashboard.html', passwords=passwords, messages=get_flashed_messages(with_categories=True))
+    return render_template('dashboard.html', passwords=passwords, messages=get_flashed_messages(with_categories=True), nonce=g.nonce)
 
 # Add password route
 @auth.route('/add_password', methods=['POST'])
@@ -357,7 +374,7 @@ def delete_password():
     if not username:
         return jsonify({'error': 'Session expired. Please log in again.'}), 401
 
-    site = request.json.get('site')
+    site = bleach.clean(request.json.get('site', '').strip())
     if not site:
         return jsonify({'error': 'Website is required to delete a password.'}), 400
 
@@ -390,8 +407,8 @@ def update_password():
         return jsonify({'error': 'Session expired. Please log in again.'}), 401
 
     data = request.json
-    site = data.get('site')
-    new_password = data.get('new_password')
+    site = bleach.clean(data.get('site', '').strip())
+    new_password = bleach.clean(data.get('new_password', '').strip())
 
     if not site or not new_password:
         return jsonify({'error': 'Website and new password are required.'}), 400
@@ -418,3 +435,23 @@ def update_password():
         return jsonify({'error': 'Database error occurred. Please try again later.'}), 500
     finally:
         conn.close()
+
+@auth.before_request
+def generate_nonce():
+    # Generate a unique nonce for every request and store it in the Flask `g` object
+    g.nonce = uuid.uuid4().hex
+
+# Add security headers for XSS protection
+@auth.after_request
+def add_security_headers(response):
+    # Add the nonce to the CSP header
+    csp = (
+        "default-src 'self'; "
+        "script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "
+        "style-src 'self' https://cdnjs.cloudflare.com; "
+        "font-src 'self' https://cdnjs.cloudflare.com; "
+        "img-src 'self'"
+    ).format(nonce=g.nonce)
+
+    response.headers['Content-Security-Policy'] = csp
+    return response

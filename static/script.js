@@ -39,22 +39,56 @@ function renderPasswords(passwords) {
         passwordSpan.innerHTML = `
         <strong>${item.website}</strong>: 
         <span class="password" id="password-${index}">${'*'.repeat(item.password.length)}</span>
-        <i class="fas fa-eye show-password" onclick="togglePassword(${index}, '${item.password}')" title="Show/Hide Password"></i> 
+        <i class="fas fa-eye show-password" title="Show/Hide Password" data-index="${index}" data-password="${item.password}"></i>
         `;
         
         // Create a div for action buttons
         const actionsDiv = document.createElement('div');
         actionsDiv.classList.add('actions');
         actionsDiv.innerHTML = `
-        <i class="fas fa-copy" onclick="copyPassword(${index}, '${item.password}')" title="Copy"></i>
-        <i class="fas fa-edit" onclick="promptEditPassword('${item.website}')" title="Edit"></i>
-        <i class="fas fa-trash-alt" onclick="confirmDelete('${item.website}')" title="Delete"></i>
+        <i class="fas fa-copy copy-password" title="Copy" data-password="${item.password}"></i>
+        <i class="fas fa-edit edit-password" title="Edit" data-website="${item.website}"></i>
+        <i class="fas fa-trash-alt delete-password" title="Delete" data-website="${item.website}"></i>
         `;
         
         // Append elements to list item
         listItem.appendChild(passwordSpan);
         listItem.appendChild(actionsDiv);
         passwordList.appendChild(listItem);
+    });
+
+    addEventListeners();
+}
+
+// Function to add event listeners for action buttons
+function addEventListeners() {
+    document.querySelectorAll('.show-password').forEach(element => {
+        element.addEventListener('click', (event) => {
+            const index = event.target.getAttribute('data-index');
+            const password = event.target.getAttribute('data-password');
+            togglePassword(index, password);
+        });
+    });
+
+    document.querySelectorAll('.copy-password').forEach(element => {
+        element.addEventListener('click', (event) => {
+            const password = event.target.getAttribute('data-password');
+            copyPassword(password);
+        });
+    });
+
+    document.querySelectorAll('.edit-password').forEach(element => {
+        element.addEventListener('click', (event) => {
+            const website = event.target.getAttribute('data-website');
+            promptEditPassword(website);
+        });
+    });
+
+    document.querySelectorAll('.delete-password').forEach(element => {
+        element.addEventListener('click', (event) => {
+            const website = event.target.getAttribute('data-website');
+            confirmDelete(website);
+        });
     });
 }
 
@@ -104,7 +138,7 @@ document.getElementById('add-btn').addEventListener('click', async () => {
 });
 
 // Function to copy a password
-function copyPassword(index, password) {
+function copyPassword(password) {
     navigator.clipboard.writeText(password);
     showPopup('Password copied to clipboard.');
 }
