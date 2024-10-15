@@ -294,6 +294,15 @@ def dashboard():
 
     return render_template('dashboard.html', passwords=passwords, messages=get_flashed_messages(with_categories=True), nonce=g.nonce)
 
+@auth.route('/logout')
+def logout():
+    # Invalidate the authentication token
+    session.pop('auth_token', None)
+    # Clear the session data
+    session.clear()
+    flash('You have been logged out.', 'success')
+    return redirect(url_for('auth.login'))
+
 # Add password route
 @auth.route('/add_password', methods=['POST'])
 def add_password():
