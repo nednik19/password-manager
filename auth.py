@@ -20,6 +20,7 @@ import secrets
 from functools import wraps
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import datetime
 
 # Load environment variables
 load_dotenv()
@@ -33,6 +34,39 @@ def get_db():
         g.db = sqlite3.connect('DB/database.db')
         g.db.row_factory = sqlite3.Row
     return g.db
+
+#Account lockout mechanism after 5 failed login attempts for 5 minutes
+def is_account_locked(username):
+    db = get_db()
+    user = db.execute('SELECT failed_attempts, lock_until FROM user_login_attempts WHERE user_id = ?', (username,)).fetchone()
+    if user and user['failed_attempts'] >= 5:
+        if user['lock_until']:
+            lock_until_dt = datetime.datetime.strptime(user['lock_until'], "%Y-%m-%d %H:%M:%S.%f")
+            if lock_until_dt > datetime.datetime.now():
+                return lock_until_dt
+    return None
+
+
+def record_failed_attempt(username):
+    db = get_db()
+    user = db.execute('SELECT failed_attempts FROM user_login_attempts WHERE user_id = ?', (username,)).fetchone()
+    if user:
+        new_attempts = user['failed_attempts'] + 1
+        lock_until = None
+        if new_attempts >= 5:
+            lock_until = (datetime.datetime.now() + datetime.timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S.%f")
+
+        db.execute('UPDATE user_login_attempts SET failed_attempts = ?, lock_until = ? WHERE user_id = ?', (new_attempts, lock_until, username))
+        db.commit()
+    else:
+        # Insert new user record if not existing
+        db.execute('INSERT INTO user_login_attempts (user_id, failed_attempts, lock_until) VALUES (?, ?, ?)', (username, 1, None))
+        db.commit()
+
+def reset_failed_attempts(username):
+    db = get_db()
+    db.execute('UPDATE user_login_attempts SET failed_attempts = 0, lock_until = NULL WHERE user_id = ?', (username,))
+    db.commit()
 
 # Initialize Flask Limiter
 limiter = Limiter(
@@ -191,7 +225,7 @@ def register_MFA():
 
 # Login route
 @auth.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def login():    
     token = secrets.token_urlsafe(32)
     session['auth_token'] = token
@@ -205,26 +239,31 @@ def login():
             flash('All fields are required.', 'error')
             return render_template('login.html', messages=get_flashed_messages(with_categories=True))
 
-        conn = get_db()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-            user = cursor.fetchone()
+        db = get_db()
+        user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
 
-            if user is None or not bcrypt.checkpw(password.encode('utf-8'), user['password']):
-                flash('Invalid username or password.', 'error')
+        if user is None:
+            flash('Invalid username or password.', 'error')
+            record_failed_attempt(username) if user else None
+            return render_template('login.html', messages=get_flashed_messages(with_categories=True))
+        else:
+            lock_until_dt = is_account_locked(username)
+            if lock_until_dt:
+                time_remaining = (lock_until_dt - datetime.datetime.now()).seconds // 60
+                flash(f'Account is locked. Please try again in {time_remaining} minutes.', 'error')
                 return render_template('login.html', messages=get_flashed_messages(with_categories=True))
 
-            # Store passkey in session for later use
 
-            session['username'] = username
-            session['passkey'] = passkey
-            session.modified = True
-            return redirect(url_for('auth.verify_otp'))
-        except sqlite3.OperationalError:
-            flash('Database error occurred. Please try again later.', 'error')
-        finally:
-            conn.close()
+            if bcrypt.checkpw(password.encode('utf-8'), user['password']):
+                session['username'] = username
+                session['passkey'] = passkey
+                session.modified = True
+                reset_failed_attempts(username)
+                return redirect(url_for('auth.verify_otp'))
+            else:
+                record_failed_attempt(username)
+                flash('Invalid username or password.', 'error')
+                return render_template('login.html', messages=get_flashed_messages(with_categories=True))
 
     return render_template('login.html', messages=get_flashed_messages(with_categories=True))
 
@@ -489,7 +528,7 @@ def add_security_headers(response):
         "script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js; "
         "style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;"
-        "img-src 'self'"
+        "img-src 'self' data:;"
     ).format(nonce=g.nonce)
 
     response.headers['Content-Security-Policy'] = csp

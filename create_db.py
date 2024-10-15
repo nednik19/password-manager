@@ -48,4 +48,26 @@ CREATE TABLE passwords (
 conn.commit()
 conn.close()
 
+# Connect to the SQLite database
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+
+# Create the 'users' table
+cursor.execute('''
+CREATE TABLE user_login_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    failed_attempts INTEGER DEFAULT 0,
+    lock_until DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+)
+''')
+
+# Commit the changes and close the connection
+conn.commit()
+conn.close()
+
+
+
+
 print(f"Database created successfully at {DB_PATH} with 'users' table.")
