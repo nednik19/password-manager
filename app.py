@@ -1,5 +1,5 @@
 from flask import Flask, redirect, url_for, session
-from auth import auth
+from auth import auth, limiter  # Import auth and limiter from auth.py
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -24,6 +24,9 @@ app.permanent_session_lifetime = timedelta(minutes=30)
 
 # Initialize CSRF protection
 csrf = CSRFProtect(app)
+
+# Apply the rate limiter globally
+limiter.init_app(app)
 
 # Register the authentication blueprint
 app.register_blueprint(auth)

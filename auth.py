@@ -18,6 +18,8 @@ import re
 import uuid
 import secrets
 from functools import wraps
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +33,12 @@ def get_db():
         g.db = sqlite3.connect('DB/database.db')
         g.db.row_factory = sqlite3.Row
     return g.db
+
+# Initialize Flask Limiter
+limiter = Limiter(
+    get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 # Close the database connection when the request ends
 @auth.teardown_request
@@ -92,6 +100,7 @@ def token_required(f):
 
 # Registration route
 @auth.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def register():
     if request.method == 'POST':
         username = bleach.clean(request.form.get('username', '').strip())
@@ -163,6 +172,7 @@ def register():
 
 # Register MFA route
 @auth.route('/register_MFA', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def register_MFA():
     username = session.get('username')
     if not username:
@@ -181,7 +191,8 @@ def register_MFA():
 
 # Login route
 @auth.route('/login', methods=['GET', 'POST'])
-def login():
+@limiter.limit("5 per minute")
+def login():    
     token = secrets.token_urlsafe(32)
     session['auth_token'] = token
     print(request.form)
@@ -219,6 +230,7 @@ def login():
 
 # MFA Verification route
 @auth.route('/verify_otp', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def verify_otp():
     username = session.get('username')
     passkey = session.get('passkey')
