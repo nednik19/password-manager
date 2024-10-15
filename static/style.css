@@ -613,3 +613,9 @@ input:valid ~ .i_room_code
     border: 1px solid #ddd;
     border-radius: 4px;
 }
+
+.p-error{
+  font-size: 1em;
+  color: rgb(217, 67, 67);
+  text-transform: uppercase;
+}

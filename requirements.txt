@@ -1,0 +1,9 @@
+Flask
+pyotp
+pillow
+cryptography
+bcrypt
+python-dotenv
+qrcode
+bleach
+flask-limiter

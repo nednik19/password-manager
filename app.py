@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session
+from flask import Flask, redirect, url_for, session, render_template
 from auth import auth, limiter  # Import auth and limiter from auth.py
 import os
 from dotenv import load_dotenv
@@ -35,6 +35,54 @@ app.register_blueprint(auth)
 @app.route('/')
 def home():
     return redirect(url_for('auth.login'))
+
+# Add error handlers for specific HTTP error codes
+@app.errorhandler(401)
+def unauthorized_error(error):
+    app.logger.error(f"401 Unauthorized - You are not authorized to access this page. {str(error)}")
+
+    error = "401 Unauthorized - You are not authorized to access this page."
+    return render_template('error.html', error=error), 401
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    app.logger.error(f"403 Forbidden - You don't have permission to access this page. {str(error)}")    
+
+    error = "403 Forbidden - You don't have permission to access this page."
+    return render_template('error.html', error=error), 403
+
+@app.errorhandler(404)
+def not_found_error(error):
+    app.logger.error(f"404 - Page not found. {str(error)}")    
+
+    error = "404 - Page not found."
+    return render_template('error.html', error=error), 404
+
+@app.errorhandler(405)
+def method_not_allowed_error(error):
+    # Log the error
+    app.logger.error(f"Method Not Allowed error occurred: {str(error)}")
+    
+    # Display a user-friendly error message
+    error = "The method is not allowed for the requested URL."
+    return render_template('error.html', error=error), 405
+
+@app.errorhandler(429)
+def method_not_allowed_error(error):
+    # Log the error
+    app.logger.error(f"Too many request: {str(error)}")
+    
+    # Display a user-friendly error message
+    error = "Too many requests."
+    return render_template('error.html', error=error), 429
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error(f"Internal Server error. {str(error)}")
+
+    error = "Internal Server Error"
+    return render_template('error.html', error=error), 500
+
 
 # Main entry point for running the app
 if __name__ == "__main__":
