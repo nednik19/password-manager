@@ -16,6 +16,8 @@ import hashlib
 import bleach
 import re
 import uuid
+import secrets
+from functools import wraps
 
 # Load environment variables
 load_dotenv()
@@ -77,6 +79,16 @@ def decrypt_with_passkey(encrypted_key, passkey, salt):
     except InvalidToken:
         flash('Invalid passkey. Please try again.', 'error')
         return None
+    
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = session.get('auth_token')
+        if not token:
+            return jsonify({'error': 'Authentication token is missing.'}), 401
+        # Optionally verify the token against the database
+        return f(*args, **kwargs)
+    return decorated
 
 # Registration route
 @auth.route('/register', methods=['GET', 'POST'])
@@ -170,6 +182,8 @@ def register_MFA():
 # Login route
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    token = secrets.token_urlsafe(32)
+    session['auth_token'] = token
     print(request.form)
     if request.method == 'POST':
         username = bleach.clean(request.form.get('username', '').strip())
@@ -191,6 +205,7 @@ def login():
                 return render_template('login.html', messages=get_flashed_messages(with_categories=True))
 
             # Store passkey in session for later use
+
             session['username'] = username
             session['passkey'] = passkey
             session.modified = True
@@ -337,6 +352,7 @@ def decrypt_with_passkey(encrypted_key, passkey, salt):
 
 # API route to fetch passwords for JavaScript
 @auth.route('/api/get_passwords', methods=['GET'])
+@token_required
 def get_passwords():
     username = session.get('username')
     if not username:
@@ -369,6 +385,7 @@ def get_passwords():
 
 # Delete password route
 @auth.route('/api/delete_password', methods=['POST'])
+@token_required
 def delete_password():
     username = session.get('username')
     if not username:
@@ -399,6 +416,7 @@ def delete_password():
         conn.close()
 
 @auth.route('/api/update_password', methods=['POST'])
+@token_required
 def update_password():
     username = session.get('username')
     passkey = session.get('passkey')
