@@ -474,9 +474,9 @@ def add_security_headers(response):
     # Add the nonce to the CSP header
     csp = (
         "default-src 'self'; "
-        "script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "
-        "style-src 'self' https://cdnjs.cloudflare.com; "
-        "font-src 'self' https://cdnjs.cloudflare.com; "
+        "script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js; "
+        "style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com;"
         "img-src 'self'"
     ).format(nonce=g.nonce)
 
