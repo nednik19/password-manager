@@ -3,6 +3,8 @@
 ## Overview
 This project is a web-based Password Manager built using Flask, JavaScript, HTML, and CSS. The application provides secure password management features, including user registration, multi-factor authentication (MFA), and encrypted storage of credentials.
 
+![Password-manager](images/show.gif)
+
 ## Features
 - **User Registration and Login**: Secure user registration and login system with support for multi-factor authentication (MFA).
 - **OTP Verification**: Implements one-time password (OTP) verification for enhanced security.
