@@ -91,4 +91,4 @@ if __name__ == "__main__":
     key_file = os.getenv('SSL_KEY_FILE', 'server.key')
     
     # Run the Flask app with SSL context
-    app.run(host='127.0.0.1', port=5000, debug=True, ssl_context=(cert_file, key_file))
+    app.run(host='127.0.0.1', port=5000, ssl_context=(cert_file, key_file))
