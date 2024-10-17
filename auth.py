@@ -128,7 +128,6 @@ def token_required(f):
         token = session.get('auth_token')
         if not token:
             return jsonify({'error': 'Authentication token is missing.'}), 401
-        # Optionally verify the token against the database
         return f(*args, **kwargs)
     return decorated
 

@@ -15,26 +15,21 @@ This project is a web-based Password Manager built using Flask, JavaScript, HTML
 ## Installation
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/nednik19/password-manager
    cd password-manager
    ```
 
-2. **Create a virtual environment**:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. **Install the dependencies**:
+2. **Install the dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Create the database**:
-   Run the following command to create the necessary database:
+3. **Generate Certificates**:
+   The application uses HTTPS for secure communication. You need to generate SSL certificates before running the application.
    ```bash
-   python create_db.py
+   python generate_cert.py
    ```
+This script will generate a self-signed SSL certificate (“cert.pem”) and a private key (“key.pem”) in the project directory.
 
 ## Usage
 1. **Run the application**:
@@ -63,13 +58,47 @@ This project is a web-based Password Manager built using Flask, JavaScript, HTML
 - **Other Python Packages**: Listed in `requirements.txt`.
 
 ## Security
-- User passwords are encrypted before being stored in the database.
-- Implements multi-factor authentication (MFA) for enhanced security.
-- Uses HTTPS certificates for secure communication.
 
-## Contributing
-Feel free to open issues or submit pull requests for improvements.
+The password manager web application is built with a strong emphasis on security. Below are the key security features:
 
-## License
-This project is licensed under the MIT License.
+- **Encryption:**
+  - User passwords are hashed using `bcrypt` with unique salts.
+  - Sensitive data (stored passwords, MFA secrets) are encrypted using symmetric encryption derived from the user's passkey.
+  - The passkey is never stored on the server (zero-knowledge approach).
+
+- **Multi-Factor Authentication (MFA):**
+  - Implements Time-Based One-Time Passwords (TOTP) using the `pyotp` library.
+  - Users set up MFA during registration by scanning a QR code.
+
+- **Secure Communication:**
+  - All data transmission is secured using HTTPS with SSL/TLS certificates.
+  - HTTP Strict Transport Security (HSTS) is enabled to enforce HTTPS.
+
+- **Secure Coding Practices:**
+  - Input validation and sanitization using the `bleach` library to prevent injection attacks.
+  - Account lockout mechanism after multiple failed login attempts.
+  - Cross-Site Request Forgery (CSRF) protection using `Flask-WTF`.
+
+- **Session Management:**
+  - Secure session cookies with `Secure`, `HttpOnly`, and `SameSite=Lax` attributes.
+  - Sessions expire after 30 minutes of inactivity.
+
+- **Security Headers:**
+  - Content Security Policy (CSP) implemented to mitigate XSS attacks.
+  - Additional headers like `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` are set.
+
+- **API Security:**
+  - Token-based authentication for API endpoints.
+  - Rate limiting implemented using `Flask-Limiter` to prevent abuse.
+
+- **Compliance with Best Practices:**
+  - Adheres to OWASP guidelines to mitigate common security risks.
+  - Security is integrated from the outset (Secure by Design).
+
+- **Zero-Knowledge Architecture:**
+  - Users' passkeys are never stored; only the user can decrypt their data.
+
+- **Regular Security Testing:**
+  - Subjected to static and dynamic security testing using tools like Bandit, SQLMap, OWASP ZAP, and Burp Suite.
+
 
